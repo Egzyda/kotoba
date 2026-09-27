@@ -12,7 +12,7 @@ const KVG = { box: 109, scale: 0.86, dx: -2, dy: 15 };
 const GUIDE = { fontRatio: 0.8, baseline: 0.03 };
 const STROKE_MS = 650;
 // マスクにする線の太さ（KanjiVG の 109 マス基準）。フォントの線をおおえる太さにする
-const MASK_WIDTH = 13;
+const MASK_WIDTH = 15;
 let maskSeq = 0;
 
 let strokeData: Promise<Record<string, string[]>> | null = null;
@@ -149,6 +149,7 @@ export class TraceBoard {
     const labels = svg('g');
     this.svg.append(defs, glyphs, labels);
 
+    const strokeAnims: { path: SVGPathElement; delay: number }[] = [];
     let n = 0;
     layout(text, this.size).forEach(({ char, cx, cy, box }, ci) => {
       const paths = data[char] ?? [];
@@ -168,10 +169,9 @@ export class TraceBoard {
       for (const d of paths) {
         const delay = n * STROKE_MS;
         n += 1;
-        const path = svg('path', { d, pathLength: 1, 'stroke-width': MASK_WIDTH });
-        path.style.animationDelay = `${delay}ms`;
-        path.style.animationDuration = `${STROKE_MS * 0.85}ms`;
+        const path = svg('path', { d, 'stroke-width': MASK_WIDTH }) as SVGPathElement;
         mg.append(path);
+        strokeAnims.push({ path, delay });
         // かきはじめの位置に ばんごう
         const m = /^[Mm]\s*([-\d.]+)[,\s]+([-\d.]+)/.exec(d);
         if (m) {
@@ -193,6 +193,20 @@ export class TraceBoard {
       fill.textContent = char;
       glyphs.append(fill);
     });
+
+    // 線の ながさを じっさいに はかって、その ながさで のばす。
+    // （pathLength="1" で ちぢめる方法は iPhone の Safari で てんせんに なってしまうため）
+    for (const { path, delay } of strokeAnims) {
+      const len = Math.ceil(path.getTotalLength()) + 2;
+      path.style.strokeDasharray = `${len} ${len}`;
+      path.style.strokeDashoffset = `${len}`;
+      path.animate([{ strokeDashoffset: `${len}` }, { strokeDashoffset: '0' }], {
+        delay,
+        duration: STROKE_MS * 0.85,
+        easing: 'ease-in-out',
+        fill: 'forwards',
+      });
+    }
   }
 
   private hideOrder(): void {

@@ -42,7 +42,7 @@ export const cardsScreen: Screen = (root, params) => {
     back,
   ]);
   const speakFace = () => {
-    if (card.classList.contains('is-flipped') && word) speakWord(word.word);
+    if (card.classList.contains('is-flipped') && word) speakWord(word);
     else speakChar(kana.char);
   };
   card.addEventListener('click', () => {

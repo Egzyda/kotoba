@@ -3,6 +3,7 @@
 // - 1文字だけ読むときは カタカナにして読ませる（ひらがな1文字だと「は」を「わ」と読むことがあるため）
 // - iPhone は さいしょの よみあげを タップの中で ひらく必要があるので unlockSpeech() を最初のタップで呼ぶ
 import { hiraToKata } from '../data/kana';
+import { speechText, type Word } from '../data/words';
 import { loadPref, savePref } from './storage';
 
 const synth: SpeechSynthesis | undefined = typeof speechSynthesis !== 'undefined' ? speechSynthesis : undefined;
@@ -50,9 +51,14 @@ export function speakChar(unit: string, queue = false): void {
   say(charReading(unit), queue);
 }
 
-/** 単語を よむ（例: きりん / ほんを よむ） */
-export function speakWord(word: string, queue = false): void {
-  say(word, queue);
+/** 単語を よむ（例: きりん / ほんを よむ）。漢字・カタカナの かきかたで よませる */
+export function speakWord(word: Word, queue = false): void {
+  say(speechText(word), queue);
+}
+
+/** そのまま よむ */
+export function speakText(text: string): void {
+  say(text);
 }
 
 /** がめんを ひらいた ちょっと あとに よむ（がめんが かわったら とりけし） */

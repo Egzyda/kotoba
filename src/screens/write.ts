@@ -72,12 +72,9 @@ export const writeScreen: Screen = (root, params) => {
     picBox.replaceChildren(wordPicture(word));
     showUnit(0);
     mascot.say(chara.lines.writeHint);
-    // たんご → さいしょの もじ の じゅんに よむ
-    const w = word.word;
-    window.setTimeout(() => {
-      speakWord(w);
-      speakChar(units[0], true);
-    }, 350);
+    // さいしょは 単語だけ よむ（つづけて 1もじめを よむと「なすな」のように きこえるため）
+    const w = word;
+    window.setTimeout(() => speakWord(w), 350);
   }
 
   mainBtn.addEventListener('click', () => {
@@ -99,7 +96,7 @@ export const writeScreen: Screen = (root, params) => {
       renderUnits();
       addStar(word.word);
       play('fanfare');
-      speakWord(word.word);
+      speakWord(word);
       mascot.say(chara.lines.wordDone);
       if (run && isLastInRun(run)) setMain('おわり', 'check');
       else setMain('つぎの え', 'next', true);
@@ -108,7 +105,7 @@ export const writeScreen: Screen = (root, params) => {
   });
 
   board.onListen = () => speakChar(units[pos]);
-  picBox.addEventListener('click', () => speakWord(word.word));
+  picBox.addEventListener('click', () => speakWord(word));
 
   prevBtn.addEventListener('click', () => {
     // かいている とちゅうなら ひとつ まえの もじへ。できた あとなら いまの もじを もういちど

@@ -664,11 +664,6 @@ rt {
   stroke: #fff;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation-name: draw-stroke;
-  animation-timing-function: ease-in-out;
-  animation-fill-mode: forwards;
 }
 .order-glyph {
   fill: #5cb8ff;
@@ -678,11 +673,6 @@ rt {
 .order-fill {
   opacity: 0;
   animation: pop-in 0.3s forwards;
-}
-@keyframes draw-stroke {
-  to {
-    stroke-dashoffset: 0;
-  }
 }
 .order-num {
   opacity: 0;

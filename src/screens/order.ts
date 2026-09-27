@@ -91,7 +91,7 @@ export const orderScreen: Screen = (root, params) => {
     picBox.replaceChildren(wordPicture(word));
     setupRound();
     mascot.say(chara.lines.orderHint);
-    const w = word.word;
+    const w = word;
     window.setTimeout(() => speakWord(w), 350);
   }
 
@@ -109,19 +109,22 @@ export const orderScreen: Screen = (root, params) => {
     tile.classList.add('is-used');
     pos += 1;
     renderSlots();
-    speakChar(text);
-    if (pos < units.length) play('correct');
+    // さいごの もじは 単語だけ よむ（「ぬ いぬ」と つづけて よまない）
+    if (pos < units.length) {
+      speakChar(text);
+      play('correct');
+    }
     if (pos === units.length) {
       addStar(word.word);
       play('fanfare');
-      speakWord(word.word, true);
+      speakWord(word);
       mascot.say(chara.lines.wordDone);
       nextBtn.classList.remove('is-hidden');
     }
   }
 
   if (run && isLastInRun(run)) nextBtn.replaceChildren(...button('おわり', { icon: 'check' }).childNodes);
-  picBox.addEventListener('click', () => speakWord(word.word));
+  picBox.addEventListener('click', () => speakWord(word));
   nextBtn.addEventListener('click', () => {
     if (!run) return newWord();
     if (isLastInRun(run)) return toSelect();

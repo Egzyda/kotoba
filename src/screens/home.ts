@@ -6,7 +6,7 @@ import { button, h } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { icon, type IconName } from '../lib/icons';
 import { setSfxEnabled, sfxEnabled, play } from '../lib/sfx';
-import { setVoiceEnabled, speakWord, voiceEnabled } from '../lib/speech';
+import { setVoiceEnabled, speakText, voiceEnabled } from '../lib/speech';
 import { loadProgress, resetProgress } from '../lib/storage';
 import { updateToLatest } from '../lib/update';
 import { go, type Screen } from '../router';
@@ -59,7 +59,7 @@ export const homeScreen: Screen = (root) => {
   voiceBtn.addEventListener('click', () => {
     setVoiceEnabled(!voiceEnabled());
     renderVoice();
-    speakWord('こえ');
+    speakText('こえ');
   });
   renderVoice();
 
