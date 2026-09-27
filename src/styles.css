@@ -488,11 +488,13 @@ rt {
   gap: 8px;
 }
 .btn-toggle {
+  flex: 1;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
+  gap: 2px;
+  max-width: 64px;
   min-height: 48px;
   border-radius: 14px;
   background: var(--white);
@@ -500,6 +502,9 @@ rt {
   font-size: 11px;
   line-height: 1.1;
   color: var(--pink);
+}
+.btn-toggle.is-busy .icon {
+  animation: spin 1s linear infinite;
 }
 .btn-toggle.is-off {
   color: var(--ink-soft);

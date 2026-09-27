@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Eraser,
   Layers,
+  Music,
   Loader,
   PenLine,
   Pencil,
@@ -46,6 +47,7 @@ export const ICONS = {
   listen: Volume2,
   sfxOn: Bell,
   sfxOff: BellOff,
+  bgm: Music,
 } satisfies Record<string, IconNode>;
 
 export type IconName = keyof typeof ICONS;

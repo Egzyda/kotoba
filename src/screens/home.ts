@@ -2,10 +2,10 @@ import { APP } from '../config';
 import { confirmHold } from '../components/confirm';
 import { Mascot } from '../components/mascot';
 import { currentCharacter } from '../data/characters';
-import { button, h } from '../lib/dom';
+import { h } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { icon, type IconName } from '../lib/icons';
-import { setSfxEnabled, sfxEnabled, play } from '../lib/sfx';
+import { bgmEnabled, play, setBgmEnabled, setSfxEnabled, sfxEnabled } from '../lib/sfx';
 import { setVoiceEnabled, speakText, voiceEnabled } from '../lib/speech';
 import { loadProgress, resetProgress } from '../lib/storage';
 import { updateToLatest } from '../lib/update';
@@ -75,9 +75,27 @@ export const homeScreen: Screen = (root) => {
   });
   renderSfx();
 
-  const charaBtn = button('かえる', { icon: 'chara', class: 'btn-small', onClick: () => go('/chara') });
+  const bgmBtn = h('button', { class: 'btn-toggle', 'aria-label': 'きょく' });
+  const renderBgm = () => {
+    bgmBtn.replaceChildren(icon('bgm', { size: 20 }), h('span', { text: 'きょく' }));
+    bgmBtn.classList.toggle('is-off', !bgmEnabled());
+  };
+  bgmBtn.addEventListener('click', () => {
+    setBgmEnabled(!bgmEnabled());
+    renderBgm();
+  });
+  renderBgm();
 
-  const updateBtn = button('さいしんに する', { icon: 'update', class: 'btn-small' });
+  const charaBtn = h('button', { class: 'btn-toggle', 'aria-label': 'かえる' }, [
+    icon('chara', { size: 20 }),
+    h('span', { text: 'かえる' }),
+  ]);
+  charaBtn.addEventListener('click', () => go('/chara'));
+
+  const updateBtn = h('button', { class: 'btn-toggle btn-update', 'aria-label': 'さいしんに する' }, [
+    icon('update', { size: 20 }),
+    h('span', { text: 'さいしん' }),
+  ]);
   let busy = false;
   updateBtn.addEventListener('click', async () => {
     if (busy) return;
@@ -98,7 +116,7 @@ export const homeScreen: Screen = (root) => {
       ]),
       h('section', { class: 'home-mascot' }, [mascot.el]),
       h('nav', { class: 'home-menu' }, modeButtons),
-      h('footer', { class: 'home-footer' }, [charaBtn, voiceBtn, sfxBtn, updateBtn]),
+      h('footer', { class: 'home-footer' }, [charaBtn, voiceBtn, sfxBtn, bgmBtn, updateBtn]),
       h('small', { class: 'app-version', text: `v${__APP_VERSION__}` }),
     ]),
   );

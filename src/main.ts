@@ -1,5 +1,5 @@
 import './styles.css';
-import { unlockSfx } from './lib/sfx';
+import { play, unlockAudio } from './lib/sfx';
 import { stopSpeech, unlockSpeech } from './lib/speech';
 import { cleanupReloadParam } from './lib/update';
 import { defineRoute, startRouter } from './router';
@@ -15,13 +15,22 @@ import { writeScreen } from './screens/write';
 cleanupReloadParam();
 
 // スマホは タップするまで おと・よみあげが でないので、さいしょのタップで ひらく
+// （iPhone は pointerdown では ひらけないことが あるので touchend / click でも よぶ）
 let unlocked = false;
+const unlock = () => {
+  unlockAudio();
+  if (!unlocked) unlockSpeech();
+  unlocked = true;
+};
+for (const type of ['pointerdown', 'touchend', 'click']) {
+  window.addEventListener(type, unlock, { capture: true, passive: true });
+}
+// ボタンを おしたら「ぽこっ」（ならべるの タイルなど じぶんの おとが ある ものは data-sfx="none"）
 window.addEventListener(
-  'pointerdown',
-  () => {
-    unlockSfx();
-    if (!unlocked) unlockSpeech();
-    unlocked = true;
+  'click',
+  (e) => {
+    const btn = (e.target as Element | null)?.closest?.('button');
+    if (btn && !btn.disabled && !btn.closest('[data-sfx="none"]')) play('tap');
   },
   { capture: true },
 );

@@ -4,6 +4,7 @@
 // - iPhone は さいしょの よみあげを タップの中で ひらく必要があるので unlockSpeech() を最初のタップで呼ぶ
 import { hiraToKata } from '../data/kana';
 import { speechText, type Word } from '../data/words';
+import { duckBgm } from './sfx';
 import { loadPref, savePref } from './storage';
 
 const synth: SpeechSynthesis | undefined = typeof speechSynthesis !== 'undefined' ? speechSynthesis : undefined;
@@ -43,6 +44,8 @@ function say(text: string, queue = false): void {
   if (voice) u.voice = voice;
   u.rate = 0.8;
   u.pitch = 1.15;
+  u.onstart = () => duckBgm(true);
+  u.onend = u.onerror = () => duckBgm(false);
   synth!.speak(u);
 }
 

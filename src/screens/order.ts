@@ -69,7 +69,7 @@ export const orderScreen: Screen = (root, params) => {
     tilesEl.style.setProperty('--cols', String(Math.max(4, Math.ceil(tiles.length / 2))));
     tilesEl.replaceChildren(
       ...tiles.map((t) => {
-        const b = h('button', { class: 'tile', text: t });
+        const b = h('button', { class: 'tile', text: t, 'data-sfx': 'none' });
         b.addEventListener('click', () => tap(b, t));
         return b;
       }),
