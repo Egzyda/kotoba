@@ -1,5 +1,6 @@
-import { MASCOT } from '../config';
+import { APP } from '../config';
 import { Mascot } from '../components/mascot';
+import { currentCharacter } from '../data/characters';
 import { h } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { loadProgress } from '../lib/storage';
@@ -8,7 +9,11 @@ import { go, type Screen } from '../router';
 
 export const homeScreen: Screen = (root) => {
   const progress = loadProgress();
-  const mascot = new Mascot({ size: 'large' });
+  const chara = currentCharacter();
+  const mascot = new Mascot(chara, { size: 'large' });
+
+  const charaBtn = h('button', { class: 'btn-chara', text: '🔁 かえる' });
+  charaBtn.addEventListener('click', () => go('/chara'));
 
   const traceBtn = h('button', { class: 'btn-big btn-trace' }, [
     h('span', { class: 'btn-icon', text: '✏️' }),
@@ -35,21 +40,19 @@ export const homeScreen: Screen = (root) => {
     }
     busy = false;
     updateBtn.textContent = '🔄 さいしんに する';
-    mascot.say(
-      result === 'latest' ? 'もう さいしんだよ！' : 'いまは つながらないみたい',
-    );
+    mascot.say(result === 'latest' ? chara.lines.updateLatest : chara.lines.updateOffline);
   });
 
   root.append(
     h('main', { class: 'screen home' }, [
       h('header', { class: 'home-header' }, [
-        h('h1', { class: 'home-title', text: 'ことば' }),
+        h('h1', { class: 'home-title', html: withFurigana(APP.name) }),
         h('div', { class: 'star-count', 'aria-label': `すたー ${progress.stars}` }, [
           h('span', { class: 'star', text: '★' }),
           h('span', { text: String(progress.stars) }),
         ]),
       ]),
-      h('section', { class: 'home-mascot' }, [mascot.el]),
+      h('section', { class: 'home-mascot' }, [mascot.el, charaBtn]),
       h('nav', { class: 'home-menu' }, [traceBtn, cardsBtn]),
       h('footer', { class: 'home-footer' }, [
         updateBtn,
@@ -58,6 +61,6 @@ export const homeScreen: Screen = (root) => {
     ]),
   );
 
-  mascot.startChatter(MASCOT.homeLines);
+  mascot.startChatter(chara.lines.home);
   return () => mascot.destroy();
 };

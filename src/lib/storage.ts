@@ -35,3 +35,22 @@ export function addStar(char: string, n = 1): Progress {
   saveProgress(p);
   return p;
 }
+
+// あんないキャラクター（未選択なら null）
+const CHARA_KEY = 'kotoba:character';
+
+export function loadCharacterId(): string | null {
+  try {
+    return localStorage.getItem(CHARA_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveCharacterId(id: string): void {
+  try {
+    localStorage.setItem(CHARA_KEY, id);
+  } catch {
+    // 保存できなくても遊べるので無視
+  }
+}

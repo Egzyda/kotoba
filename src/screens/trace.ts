@@ -1,6 +1,7 @@
 // なぞり書き画面（ベース実装）。
 // いまは描画・けす・つぎ まで。簡易採点（SPEC 4章）は今後ここに追加する。
 import { Mascot } from '../components/mascot';
+import { currentCharacter, pick } from '../data/characters';
 import { findKana, getList, kataToHira, type Group, type Script } from '../data/kana';
 import { h, screenHeader } from '../lib/dom';
 import { addStar } from '../lib/storage';
@@ -15,7 +16,8 @@ export const traceScreen: Screen = (root, params) => {
   const list = getList(script, kana.group);
   const index = list.findIndex((k) => k.char === kana.char);
 
-  const mascot = new Mascot({ size: 'small', bubble: 'right' });
+  const chara = currentCharacter();
+  const mascot = new Mascot(chara, { size: 'small', bubble: 'right' });
   const canvas = h('canvas', { class: 'trace-canvas' });
   const ctx = canvas.getContext('2d')!;
   const strokes: { x: number; y: number }[][] = [];
@@ -87,13 +89,12 @@ export const traceScreen: Screen = (root, params) => {
   const doneBtn = h('button', { class: 'btn-action btn-primary', text: 'できた！' });
   doneBtn.addEventListener('click', () => {
     if (strokes.length === 0) {
-      mascot.say('ゆびで なぞってね');
+      mascot.say(chara.lines.traceEmpty);
       return;
     }
     // TODO: SPEC 4章の簡易採点（カバー率・はみ出し率）で3段階評価にする
     addStar(kana.char);
-    mascot.setMood('happy');
-    mascot.say('じょうず！ ★ ゲット！');
+    mascot.say(`${pick(chara.lines.praise)} ★`);
   });
 
   const nextBtn = h('button', { class: 'btn-action', text: 'つぎ →' });

@@ -1,6 +1,7 @@
 // たんごカード画面（ベース実装）。
 // 表: 文字 / 裏: 絵＋単語。単語・絵データは今後 src/data に追加する。
 import { Mascot } from '../components/mascot';
+import { currentCharacter } from '../data/characters';
 import { findKana, getList, type Group, type Script } from '../data/kana';
 import { h, screenHeader } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
@@ -13,7 +14,8 @@ export const cardsScreen: Screen = (root, params) => {
   const list = getList(script, kana.group);
   const index = list.findIndex((k) => k.char === kana.char);
 
-  const mascot = new Mascot({ size: 'small', bubble: 'right' });
+  const chara = currentCharacter();
+  const mascot = new Mascot(chara, { size: 'small', bubble: 'right' });
 
   // 表面はカタカナ学習の対象なのでふりがな無し。裏面の単語は必要に応じて付ける。
   const card = h('button', { class: 'flashcard', 'aria-label': 'かーど' }, [
@@ -46,7 +48,7 @@ export const cardsScreen: Screen = (root, params) => {
       h('div', { class: 'trace-actions' }, [prevBtn, nextBtn]),
     ]),
   );
-  mascot.say('タッチで めくってね');
+  mascot.say(chara.lines.cardsHint);
 
   return () => mascot.destroy();
 };
