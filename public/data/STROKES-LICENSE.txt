@@ -1,9 +1,6 @@
-strokes.json は KanjiVG のデータ（ひらがな・カタカナ・長音符の線）を抜き出したものです。
+strokes.json は animCJK（https://github.com/parsimonhi/animCJK）の
+かな（ひらがな・カタカナ・長音符）の SVG から、画の かたちと とおりみちを 抜き出したものです。
 
-KanjiVG
-Copyright (C) 2009-2023 Ulrich Apel
-https://kanjivg.tagaini.net
-Licensed under the Creative Commons Attribution-Share Alike 3.0 (CC BY-SA 3.0)
-https://creativecommons.org/licenses/by-sa/3.0/
-
-strokes.json 自体も同じ CC BY-SA 3.0 で提供します。
+AnimCJK 2016-2026 Copyright FM-SH
+かな の SVG は GNU Lesser General Public License（LGPL）v3 以降で配布されています（LGPL-animCJK.txt）。
+strokes.json も同じ LGPL v3 以降で提供します。

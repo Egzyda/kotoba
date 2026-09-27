@@ -1,52 +1,42 @@
 // なぞり書きボード（Canvas）。
-// - ガイド文字は教科書体風フォント（Klee One）でうすく描く（とめ・はね・はらいが分かる）
-// - かきじゅんは KanjiVG の線データを SVG で重ね、1画ずつ順番にアニメーションする
+// - 見本と かきじゅんは animCJK のデータ（public/data/strokes.json）を つかう
+//   1画ごとに「画の かたち（o）」と「ふでの とおりみち（m）」が セットに なっている
+// - 見本: すべての画の かたちを うすく ぬる（とめ・はね・はらい が でる）
+// - かきじゅん: とおりみちを 太い線で のばし、その画の かたちで きりぬく → 1画ずつ ぴったり ぬられる
 //   （なぞりはじめると かきじゅん表示は消える。右上のボタンで もう一度 見られる）
 import { h } from '../lib/dom';
 import { icon } from '../lib/icons';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// KanjiVG（109×109）の線を、ガイド文字（フォント）に重なるように置くための補正値
-const KVG = { box: 109, scale: 0.86, dx: -2, dy: 15 };
-const GUIDE = { fontRatio: 0.8, baseline: 0.03 };
-const STROKE_MS = 650;
-// マスクにする線の太さ（KanjiVG の 109 マス基準）。フォントの線をおおえる太さにする
-const MASK_WIDTH = 15;
-let maskSeq = 0;
+/** 1画（いくつかの パーツに わかれることが ある） */
+type Stroke = { o: string; m: string }[];
 
-let strokeData: Promise<Record<string, string[]>> | null = null;
-function loadStrokes(): Promise<Record<string, string[]>> {
+const BOX = 1024; // animCJK の 座標の大きさ
+const GLYPH_SCALE = 0.9; // マスに たいする 文字の大きさ
+const STROKE_MS = 700;
+const MEDIAN_WIDTH = 150; // とおりみちの 線の太さ（画の はばより 太く）
+let clipSeq = 0;
+
+let strokeData: Promise<Record<string, Stroke[]>> | null = null;
+function loadStrokes(): Promise<Record<string, Stroke[]>> {
   strokeData ??= fetch(`${import.meta.env.BASE_URL}data/strokes.json`)
-    .then((r) => r.json() as Promise<Record<string, string[]>>)
+    .then((r) => r.json() as Promise<Record<string, Stroke[]>>)
     .catch(() => ({}));
   return strokeData;
 }
 
-/** 文字ごとの配置（中心と、1文字ぶんの箱の大きさ） */
+/** 文字ごとの配置（中心と、1文字ぶんの マスの大きさ）。きゃ などは 半分の大きさで ならべる */
 function layout(text: string, size: number): { char: string; cx: number; cy: number; box: number }[] {
   const chars = [...text];
-  // 2文字（きゃ など）は半分の大きさで横にならべる
-  const box = chars.length > 1 ? size / chars.length : size;
-  const fontSize = box * GUIDE.fontRatio * (chars.length > 1 ? 1.25 : 1);
-  const unit = fontSize / GUIDE.fontRatio; // フォントサイズに対応する箱
-  return chars.map((char, i) => ({
-    char,
-    cx: size / 2 + (i - (chars.length - 1) / 2) * fontSize,
-    cy: size / 2,
-    box: unit,
-  }));
+  const box = size / chars.length;
+  return chars.map((char, i) => ({ char, cx: box * (i + 0.5), cy: size / 2, box }));
 }
 
-/** ガイド文字と かきじゅんの文字を まったく同じ位置に置くための属性 */
-function glyphAttrs(cx: number, cy: number, box: number): Record<string, string | number> {
-  return {
-    x: cx,
-    y: cy + box * GUIDE.baseline,
-    'font-size': box * GUIDE.fontRatio,
-    'text-anchor': 'middle',
-    'dominant-baseline': 'central',
-  };
+/** animCJK の座標 → ボードの座標 */
+function glyphTransform(cx: number, cy: number, box: number): string {
+  const k = (box / BOX) * GLYPH_SCALE;
+  return `translate(${cx} ${cy}) scale(${k}) translate(${-BOX / 2} ${-BOX / 2})`;
 }
 
 function svgEl(tag: string, attrs: Record<string, string | number> = {}): SVGElement {
@@ -81,7 +71,7 @@ export class TraceBoard {
       icon('again', { size: 20 }),
       h('span', { text: 'かきじゅん' }),
     ]);
-    replay.addEventListener('click', () => this.playOrder());
+    replay.addEventListener('click', () => void this.playOrder());
     this.listenBtn = h('button', { class: 'board-listen', 'aria-label': 'きく' }, [icon('listen', { size: 20 })]);
     this.listenBtn.addEventListener('click', () => this.onListen?.());
     this.guideSvg = document.createElementNS(SVG_NS, 'svg');
@@ -116,8 +106,8 @@ export class TraceBoard {
     this.guide = text;
     this.strokes = [];
     this.redraw();
-    this.renderGuide();
-    this.playOrder();
+    void this.renderGuide();
+    void this.playOrder();
   }
 
   clear(): void {
@@ -129,75 +119,64 @@ export class TraceBoard {
     return this.strokes.length > 0;
   }
 
-  /**
-   * かきじゅんアニメーション。
-   * ガイドと同じフォントの文字を青で重ね、KanjiVG の線を太い「マスク」として1画ずつのばして
-   * 文字を順番にぬっていく。見えるのは フォントの形なので、うすい見本と ぴったり重なる。
-   */
+  /** かきじゅんアニメーション（1画ずつ、その画の かたちの中だけを ぬる） */
   async playOrder(): Promise<void> {
     const text = this.guide;
     const data = await loadStrokes();
     if (text !== this.guide || this.size === 0) return;
-    const run = ++maskSeq;
-    const svg = svgEl;
+    const run = ++clipSeq;
     this.svg.replaceChildren();
     this.svg.setAttribute('viewBox', `0 0 ${this.size} ${this.size}`);
     this.svg.classList.remove('is-hidden');
 
-    const defs = svg('defs');
-    const glyphs = svg('g');
-    const labels = svg('g');
+    const defs = svgEl('defs');
+    const glyphs = svgEl('g');
+    const labels = svgEl('g');
     this.svg.append(defs, glyphs, labels);
 
-    const strokeAnims: { path: SVGPathElement; delay: number }[] = [];
+    const anims: { path: SVGPathElement; delay: number }[] = [];
     let n = 0;
     layout(text, this.size).forEach(({ char, cx, cy, box }, ci) => {
-      const paths = data[char] ?? [];
-      const k = (box / KVG.box) * KVG.scale;
-      const toKvg = `translate(${cx} ${cy}) scale(${k}) translate(${-KVG.box / 2 + KVG.dx} ${-KVG.box / 2 + KVG.dy})`;
-      const maskId = `order-${run}-${ci}`;
-      const mask = svg('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: this.size, height: this.size });
-      const mg = svg('g', { transform: toKvg });
-      mask.append(mg);
-      defs.append(mask);
-
-      const attrs = glyphAttrs(cx, cy, box);
-      const glyph = svg('text', { ...attrs, class: 'order-glyph', mask: `url(#${maskId})` });
-      glyph.textContent = char;
-      glyphs.append(glyph);
-
-      for (const d of paths) {
+      const g = svgEl('g', { transform: glyphTransform(cx, cy, box) });
+      glyphs.append(g);
+      const k = (box / BOX) * GLYPH_SCALE;
+      for (const stroke of data[char] ?? []) {
         const delay = n * STROKE_MS;
         n += 1;
-        const path = svg('path', { d, 'stroke-width': MASK_WIDTH }) as SVGPathElement;
-        mg.append(path);
-        strokeAnims.push({ path, delay });
+        stroke.forEach((part, pi) => {
+          const clipId = `clip-${run}-${ci}-${n}-${pi}`;
+          const clip = svgEl('clipPath', { id: clipId });
+          clip.append(svgEl('path', { d: part.o }));
+          defs.append(clip);
+          const path = svgEl('path', {
+            d: part.m,
+            class: 'order-median',
+            'stroke-width': MEDIAN_WIDTH,
+            'clip-path': `url(#${clipId})`,
+          }) as SVGPathElement;
+          g.append(path);
+          anims.push({ path, delay });
+        });
         // かきはじめの位置に ばんごう
-        const m = /^[Mm]\s*([-\d.]+)[,\s]+([-\d.]+)/.exec(d);
+        const m = /^M\s*([-\d.]+)[,\s]+([-\d.]+)/.exec(stroke[0]?.m ?? '');
         if (m) {
-          const x = cx + (Number(m[1]) - KVG.box / 2 + KVG.dx) * k;
-          const y = cy + (Number(m[2]) - KVG.box / 2 + KVG.dy) * k;
+          const x = cx + (Number(m[1]) - BOX / 2) * k;
+          const y = cy + (Number(m[2]) - BOX / 2) * k;
           const r = this.size * 0.037;
-          const label = svg('g', { class: 'order-num', transform: `translate(${x} ${y})` });
+          const label = svgEl('g', { class: 'order-num', transform: `translate(${x} ${y})` });
           label.style.animationDelay = `${delay}ms`;
-          const t = svg('text', { 'font-size': r * 1.3, dy: '0.36em' });
+          const t = svgEl('text', { 'font-size': r * 1.3, dy: '0.36em' });
           t.textContent = String(n);
-          label.append(svg('circle', { r }), t);
+          label.append(svgEl('circle', { r }), t);
           labels.append(label);
         }
       }
-
-      // さいごに 文字ぜんたいを ぬって、マスクの すきまを うめる
-      const fill = svg('text', { ...attrs, class: 'order-glyph order-fill' });
-      fill.style.animationDelay = `${n * STROKE_MS}ms`;
-      fill.textContent = char;
-      glyphs.append(fill);
     });
 
-    // 線の ながさを じっさいに はかって、その ながさで のばす。
-    // （pathLength="1" で ちぢめる方法は iPhone の Safari で てんせんに なってしまうため）
-    for (const { path, delay } of strokeAnims) {
-      const len = Math.ceil(path.getTotalLength()) + 2;
+    // 線の ながさを じっさいに はかって、その ながさで のばす
+    // （pathLength で ちぢめる方法は iPhone の Safari で てんせんに なるため つかわない）
+    for (const { path, delay } of anims) {
+      const len = Math.ceil(path.getTotalLength()) + MEDIAN_WIDTH;
       path.style.strokeDasharray = `${len} ${len}`;
       path.style.strokeDashoffset = `${len}`;
       path.animate([{ strokeDashoffset: `${len}` }, { strokeDashoffset: '0' }], {
@@ -224,18 +203,21 @@ export class TraceBoard {
     this.canvas.height = size * dpr;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.redraw();
-    this.renderGuide();
-    if (!this.svg.classList.contains('is-hidden')) this.playOrder();
+    void this.renderGuide();
+    if (!this.svg.classList.contains('is-hidden')) void this.playOrder();
   }
 
-  /** うすい見本（かきじゅんと同じ SVG の文字で描いて、ぴったり重ねる） */
-  private renderGuide(): void {
+  /** うすい見本（かきじゅんと おなじ データの 画の かたちを ぬる） */
+  private async renderGuide(): Promise<void> {
+    const text = this.guide;
+    const data = await loadStrokes();
+    if (text !== this.guide) return;
     this.guideSvg.setAttribute('viewBox', `0 0 ${this.size} ${this.size}`);
     this.guideSvg.replaceChildren(
-      ...layout(this.guide, this.size).map(({ char, cx, cy, box }) => {
-        const t = svgEl('text', { ...glyphAttrs(cx, cy, box), class: 'guide-glyph' });
-        t.textContent = char;
-        return t;
+      ...layout(text, this.size).map(({ char, cx, cy, box }) => {
+        const g = svgEl('g', { transform: glyphTransform(cx, cy, box), class: 'guide-glyph' });
+        for (const stroke of data[char] ?? []) for (const part of stroke) g.append(svgEl('path', { d: part.o }));
+        return g;
       }),
     );
   }
