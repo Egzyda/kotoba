@@ -1,0 +1,10 @@
+{
+  "name": "ことば",
+  "short_name": "ことば",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7fb",
+  "theme_color": "#ffd8e4",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
