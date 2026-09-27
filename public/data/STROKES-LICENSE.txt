@@ -1,0 +1,9 @@
+strokes.json は KanjiVG のデータ（ひらがな・カタカナ・長音符の線）を抜き出したものです。
+
+KanjiVG
+Copyright (C) 2009-2023 Ulrich Apel
+https://kanjivg.tagaini.net
+Licensed under the Creative Commons Attribution-Share Alike 3.0 (CC BY-SA 3.0)
+https://creativecommons.org/licenses/by-sa/3.0/
+
+strokes.json 自体も同じ CC BY-SA 3.0 で提供します。

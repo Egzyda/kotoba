@@ -1,4 +1,5 @@
 // なぞり書き画面。row があれば その ぎょうだけを順番に進める。
+// 「できた」→ ほめる → ボタンが「つぎ」に かわる。「まえ」で ひとつ まえの もじへ。
 import { TraceBoard } from '../components/board';
 import { Mascot } from '../components/mascot';
 import { currentCharacter, pick } from '../data/characters';
@@ -22,36 +23,42 @@ export const traceScreen: Screen = (root, params) => {
   board.setGuide(kana.char);
 
   const toSelect = () => go('/select', { mode: 'trace', script, group: kana.group });
+  const moveTo = (i: number) =>
+    replace('/trace', {
+      script,
+      group: kana.group,
+      char: list[(i + list.length) % list.length].char,
+      ...(rowParam !== null ? { row: rowParam } : {}),
+    });
 
-  const nextBtn = button(isLast ? 'おわり' : 'つぎ', {
-    icon: isLast ? 'check' : 'next',
-    iconAfter: true,
-    onClick: () => {
-      if (isLast) return toSelect();
-      const next = list[(index + 1) % list.length];
-      replace('/trace', {
-        script,
-        group: kana.group,
-        char: next.char,
-        ...(rowParam !== null ? { row: rowParam } : {}),
-      });
-    },
+  let done = false;
+  const mainBtn = button('できた', { icon: 'check', class: 'btn-action btn-primary' });
+  const setMain = (label: string, iconName: 'check' | 'next') => {
+    mainBtn.replaceChildren(...button(label, { icon: iconName, iconAfter: iconName === 'next' }).childNodes);
+  };
+  mainBtn.addEventListener('click', () => {
+    if (done) return isLast ? toSelect() : moveTo(index + 1);
+    if (!board.hasStrokes) return mascot.say(chara.lines.traceEmpty);
+    done = true;
+    addStar(kana.char);
+    if (isLast) {
+      mascot.say(pick(chara.lines.praise), chara.lines.rowDone);
+      setMain('おわり', 'check');
+    } else {
+      mascot.say(pick(chara.lines.praise));
+      setMain('つぎ', 'next');
+    }
+    mainBtn.classList.add('is-next');
   });
 
+  const prevBtn = button('まえ', { icon: 'prev', onClick: () => moveTo(index - 1) });
+  // ぎょう練習の さいしょは もどれない
+  prevBtn.disabled = rowParam !== null && index === 0;
+
   const actions = h('div', { class: 'actions' }, [
+    prevBtn,
     button('けす', { icon: 'eraser', onClick: () => board.clear() }),
-    button('できた', {
-      icon: 'check',
-      class: 'btn-action btn-primary',
-      onClick: () => {
-        if (!board.hasStrokes) return mascot.say(chara.lines.traceEmpty);
-        // TODO: SPEC 4章の簡易採点（カバー率・はみ出し率）で3段階評価にする
-        addStar(kana.char);
-        if (isLast) mascot.say(pick(chara.lines.praise), chara.lines.rowDone);
-        else mascot.say(pick(chara.lines.praise));
-      },
-    }),
-    nextBtn,
+    mainBtn,
   ]);
 
   // カタカナ学習時は読み方が分からないので、ここだけ小さく よみ を出す

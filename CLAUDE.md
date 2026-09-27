@@ -11,13 +11,15 @@
 - ホームに「さいしんに する」ボタン（`src/lib/update.ts`、`version.json` と比較してリロード）
 - あんないキャラ: 名探偵プリキュア！の4人から選択（初回はキャラえらび画面、「かいし」でホームへ）。キャラごとに口調を変えたセリフ
 - 単語データと絵あり（Fluent Emoji）。ぎょう指定・ならべる（ダミーのレベル1〜3）あり
-- 未実装: なぞり書きの簡易採点（いまは「できた」で★付与）、ごほうび演出
+- なぞる / かこう: かきじゅんアニメーション（KanjiVG）、「できた」→ほめる→「つぎ」に変わる、「まえ」で戻る。採点はしない
+- 未実装: ごほうび演出
 
 ## 画面・UIのルール（重要）
 
 - **スクロールしない・1画面に収める**（SE〜Pro Max で確認）。文字選択・長押し・拡大もさせない
 - **セーフエリア**の内側に余白を取り、ノッチ・ホームバー付近にボタンを置かない
 - **機種依存の絵文字は使わない**。アイコンは Lucide（`src/lib/icons.ts`）、絵は `public/img/words/` の SVG
+- **あそぶ文字は教科書体ふう（Klee One、`--font-play`）**。セリフ・ボタンは丸ゴシックのまま
 - **セリフ**は自動で消えない／切り替わらない。タップで進む。まとまりの途中で改行せず、最大2行・入らなければ縮小（`src/lib/fit.ts`）。セリフは区切りに半角スペースを入れて書く
 
 ## 表記ルール（重要）
@@ -37,7 +39,7 @@
 ## 想定技術構成
 
 - Vite + TypeScript（vanilla、フレームワーク無し）
-- Canvas 2D API でなぞり書きの描画・簡易採点
+- Canvas 2D API でなぞり書きの描画（採点なし）、SVG でかきじゅん
 - `localStorage` で進捗（スター数など）を保存。バックエンド無し
 - Cloudflare Pages（ビルドコマンド `npm run build`、出力ディレクトリ `dist`）
 
@@ -48,7 +50,8 @@
 - `src/data/kana.ts`: 文字データ（ひらがなを定義し、カタカナは変換で生成）
 - `src/data/words.ts`: 単語と絵（文字を含む単語でOK、「を」は文、単語なしは null）
 - `src/data/lookalike.ts`: 形の似た文字（ならべる レベル3のダミー）
-- `src/components/board.ts`: なぞり書きボード（Canvas）
+- `src/components/board.ts`: なぞり書きボード（Canvas＋かきじゅんSVG）
+- `public/data/strokes.json`: かきじゅんの線（KanjiVG）/ `public/fonts/`: Klee One（かなだけ）
 - `src/components/mascot.ts`: あんないキャラ表示（画像の切り抜き＋吹き出し）
 - `src/screens/*.ts`: 各画面
 - `public/_headers`: Cloudflare Pages のキャッシュ設定
