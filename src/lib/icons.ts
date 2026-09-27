@@ -2,6 +2,8 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
+  BellOff,
   Check,
   ChevronRight,
   Eraser,
@@ -14,6 +16,8 @@ import {
   RefreshCw,
   RotateCcw,
   Shuffle,
+  Speech,
+  Volume2,
   Star,
   Users,
   createElement,
@@ -38,6 +42,10 @@ export const ICONS = {
   random: Shuffle,
   star: Star,
   chara: Users,
+  voice: Speech,
+  listen: Volume2,
+  sfxOn: Bell,
+  sfxOff: BellOff,
 } satisfies Record<string, IconNode>;
 
 export type IconName = keyof typeof ICONS;

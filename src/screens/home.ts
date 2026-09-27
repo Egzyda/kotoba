@@ -5,6 +5,8 @@ import { currentCharacter } from '../data/characters';
 import { button, h } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { icon, type IconName } from '../lib/icons';
+import { setSfxEnabled, sfxEnabled, play } from '../lib/sfx';
+import { setVoiceEnabled, speakWord, voiceEnabled } from '../lib/speech';
 import { loadProgress, resetProgress } from '../lib/storage';
 import { updateToLatest } from '../lib/update';
 import { go, type Screen } from '../router';
@@ -48,6 +50,31 @@ export const homeScreen: Screen = (root) => {
     }),
   );
 
+  // こえ（よみあげ）と おと（こうかおん）の オン・オフ
+  const voiceBtn = h('button', { class: 'btn-toggle', 'aria-label': 'こえ' });
+  const renderVoice = () => {
+    voiceBtn.replaceChildren(icon('voice', { size: 20 }), h('span', { text: 'こえ' }));
+    voiceBtn.classList.toggle('is-off', !voiceEnabled());
+  };
+  voiceBtn.addEventListener('click', () => {
+    setVoiceEnabled(!voiceEnabled());
+    renderVoice();
+    speakWord('こえ');
+  });
+  renderVoice();
+
+  const sfxBtn = h('button', { class: 'btn-toggle', 'aria-label': 'おと' });
+  const renderSfx = () => {
+    sfxBtn.replaceChildren(icon(sfxEnabled() ? 'sfxOn' : 'sfxOff', { size: 20 }), h('span', { text: 'おと' }));
+    sfxBtn.classList.toggle('is-off', !sfxEnabled());
+  };
+  sfxBtn.addEventListener('click', () => {
+    setSfxEnabled(!sfxEnabled());
+    renderSfx();
+    play('correct');
+  });
+  renderSfx();
+
   const charaBtn = button('かえる', { icon: 'chara', class: 'btn-small', onClick: () => go('/chara') });
 
   const updateBtn = button('さいしんに する', { icon: 'update', class: 'btn-small' });
@@ -71,11 +98,8 @@ export const homeScreen: Screen = (root) => {
       ]),
       h('section', { class: 'home-mascot' }, [mascot.el]),
       h('nav', { class: 'home-menu' }, modeButtons),
-      h('footer', { class: 'home-footer' }, [
-        charaBtn,
-        h('small', { class: 'app-version', text: `v${__APP_VERSION__}` }),
-        updateBtn,
-      ]),
+      h('footer', { class: 'home-footer' }, [charaBtn, voiceBtn, sfxBtn, updateBtn]),
+      h('small', { class: 'app-version', text: `v${__APP_VERSION__}` }),
     ]),
   );
 

@@ -487,7 +487,49 @@ rt {
   justify-content: space-between;
   gap: 8px;
 }
+.btn-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  min-height: 48px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  line-height: 1.1;
+  color: var(--pink);
+}
+.btn-toggle.is-off {
+  color: var(--ink-soft);
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.board-listen {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: #b8860b;
+}
+.btn-listen {
+  flex: 0 0 72px;
+  color: #b8860b;
+  background: var(--yellow-soft);
+}
+.quiz-pic,
+.order-pic .word-pic {
+  cursor: pointer;
+}
 .app-version {
+  align-self: center;
+  margin-top: -6px;
   font-size: 10px;
   font-weight: 500;
   color: var(--ink-soft);

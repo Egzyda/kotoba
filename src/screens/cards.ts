@@ -6,6 +6,8 @@ import { findKana, getList, getRowList, kataToHira, toScript, type Group, type S
 import { WORDS } from '../data/words';
 import { button, h, screenHeader } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
+import { play } from '../lib/sfx';
+import { speakChar, speakSoon, speakWord } from '../lib/speech';
 import { go, replace, type Screen } from '../router';
 
 export const cardsScreen: Screen = (root, params) => {
@@ -39,8 +41,14 @@ export const cardsScreen: Screen = (root, params) => {
     ]),
     back,
   ]);
+  const speakFace = () => {
+    if (card.classList.contains('is-flipped') && word) speakWord(word.word);
+    else speakChar(kana.char);
+  };
   card.addEventListener('click', () => {
     card.classList.toggle('is-flipped');
+    play('flip');
+    speakFace();
     if (!card.classList.contains('is-flipped')) return;
     if (!word) mascot.say(chara.lines.noWord);
     else if (index === list.length - 1 && rowParam !== null) mascot.say(chara.lines.rowDone);
@@ -71,10 +79,18 @@ export const cardsScreen: Screen = (root, params) => {
       screenHeader(withFurigana('カード'), toSelect),
       h('div', { class: 'mascot-row' }, [mascot.el]),
       h('div', { class: 'cards-stage' }, [card]),
-      h('div', { class: 'actions' }, [prevBtn, nextBtn]),
+      h('div', { class: 'actions' }, [
+        prevBtn,
+        button('', { icon: 'listen', class: 'btn-action btn-listen', onClick: speakFace }),
+        nextBtn,
+      ]),
     ]),
   );
   mascot.say(chara.lines.cardsHint);
+  const cancelSpeak = speakSoon(speakFace);
 
-  return () => mascot.destroy();
+  return () => {
+    cancelSpeak();
+    mascot.destroy();
+  };
 };

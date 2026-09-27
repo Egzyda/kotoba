@@ -68,6 +68,9 @@ export class TraceBoard {
   private observer: ResizeObserver;
   /** 何かを描いたとき（なぞりはじめ）に呼ばれる */
   onDraw?: () => void;
+  /** 左上の「きく」ボタン */
+  onListen?: () => void;
+  private listenBtn: HTMLButtonElement;
 
   constructor() {
     this.canvas = h('canvas', { class: 'board-canvas' });
@@ -79,9 +82,11 @@ export class TraceBoard {
       h('span', { text: 'かきじゅん' }),
     ]);
     replay.addEventListener('click', () => this.playOrder());
+    this.listenBtn = h('button', { class: 'board-listen', 'aria-label': 'きく' }, [icon('listen', { size: 20 })]);
+    this.listenBtn.addEventListener('click', () => this.onListen?.());
     this.guideSvg = document.createElementNS(SVG_NS, 'svg');
     this.guideSvg.classList.add('board-guide');
-    this.inner = h('div', { class: 'board-inner' }, [this.guideSvg, this.canvas, this.svg, replay]);
+    this.inner = h('div', { class: 'board-inner' }, [this.guideSvg, this.canvas, this.svg, replay, this.listenBtn]);
     this.el = h('div', { class: 'board' }, [this.inner]);
 
     const pos = (e: PointerEvent) => {

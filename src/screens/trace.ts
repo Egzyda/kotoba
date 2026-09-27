@@ -5,6 +5,8 @@ import { Mascot } from '../components/mascot';
 import { currentCharacter, pick } from '../data/characters';
 import { findKana, getList, getRowList, kataToHira, type Group, type Script } from '../data/kana';
 import { button, h, screenHeader } from '../lib/dom';
+import { play } from '../lib/sfx';
+import { speakChar, speakSoon } from '../lib/speech';
 import { addStar } from '../lib/storage';
 import { go, replace, type Screen } from '../router';
 
@@ -22,6 +24,8 @@ export const traceScreen: Screen = (root, params) => {
   const mascot = new Mascot(chara, { size: 'small', bubble: 'right' });
   const board = new TraceBoard();
   board.setGuide(kana.char);
+  board.onListen = () => speakChar(kana.char);
+  const cancelSpeak = speakSoon(() => speakChar(kana.char));
 
   const toSelect = () => go('/select', { mode: 'trace', script, group: kana.group });
   const moveTo = (i: number) =>
@@ -42,6 +46,7 @@ export const traceScreen: Screen = (root, params) => {
     if (!board.hasStrokes) return mascot.say(chara.lines.traceEmpty);
     done = true;
     addStar(kana.char);
+    play(isLast && rowParam !== null ? 'fanfare' : 'star');
     if (isLast) {
       mascot.say(pick(chara.lines.praise), ...(rowParam !== null ? [chara.lines.rowDone] : []));
       setMain('おわり', 'check');
@@ -87,6 +92,7 @@ export const traceScreen: Screen = (root, params) => {
   mascot.say(chara.lines.traceEmpty);
 
   return () => {
+    cancelSpeak();
     board.destroy();
     mascot.destroy();
   };

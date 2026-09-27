@@ -10,6 +10,8 @@ import { QUIZ_WORDS, type Word } from '../data/words';
 import { button, h, screenHeader, scriptToggle } from '../lib/dom';
 import type { IconName } from '../lib/icons';
 import { isLastInRun, parseRun, runParams } from '../lib/sequence';
+import { play } from '../lib/sfx';
+import { speakChar, speakWord } from '../lib/speech';
 import { addStar, loadPref, savePref } from '../lib/storage';
 import { go, replace, type Screen } from '../router';
 
@@ -53,6 +55,7 @@ export const writeScreen: Screen = (root, params) => {
     state = 'writing';
     renderUnits();
     board.setGuide(units[pos]);
+    if (pos > 0) speakChar(units[pos]);
     setMain('できた', 'check');
     prevBtn.disabled = pos === 0;
   }
@@ -69,6 +72,12 @@ export const writeScreen: Screen = (root, params) => {
     picBox.replaceChildren(wordPicture(word));
     showUnit(0);
     mascot.say(chara.lines.writeHint);
+    // たんご → さいしょの もじ の じゅんに よむ
+    const w = word.word;
+    window.setTimeout(() => {
+      speakWord(w);
+      speakChar(units[0], true);
+    }, 350);
   }
 
   mainBtn.addEventListener('click', () => {
@@ -82,18 +91,24 @@ export const writeScreen: Screen = (root, params) => {
     if (pos < units.length - 1) {
       state = 'charDone';
       renderUnits();
+      play('correct');
       mascot.say(pick(chara.lines.praise));
       setMain('つぎの もじ', 'next', true);
     } else {
       state = 'wordDone';
       renderUnits();
       addStar(word.word);
+      play('fanfare');
+      speakWord(word.word);
       mascot.say(chara.lines.wordDone);
       if (run && isLastInRun(run)) setMain('おわり', 'check');
       else setMain('つぎの え', 'next', true);
     }
     prevBtn.disabled = false;
   });
+
+  board.onListen = () => speakChar(units[pos]);
+  picBox.addEventListener('click', () => speakWord(word.word));
 
   prevBtn.addEventListener('click', () => {
     // かいている とちゅうなら ひとつ まえの もじへ。できた あとなら いまの もじを もういちど

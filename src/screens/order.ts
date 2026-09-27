@@ -10,6 +10,8 @@ import { QUIZ_WORDS, type Word } from '../data/words';
 import { button, h, screenHeader, scriptToggle, shuffle } from '../lib/dom';
 import { icon } from '../lib/icons';
 import { isLastInRun, parseRun, runParams } from '../lib/sequence';
+import { play } from '../lib/sfx';
+import { speakChar, speakWord } from '../lib/speech';
 import { addStar, loadPref, savePref } from '../lib/storage';
 import { go, replace, type Screen } from '../router';
 
@@ -89,6 +91,8 @@ export const orderScreen: Screen = (root, params) => {
     picBox.replaceChildren(wordPicture(word));
     setupRound();
     mascot.say(chara.lines.orderHint);
+    const w = word.word;
+    window.setTimeout(() => speakWord(w), 350);
   }
 
   function tap(tile: HTMLButtonElement, text: string) {
@@ -97,6 +101,7 @@ export const orderScreen: Screen = (root, params) => {
       tile.classList.remove('is-shake');
       void tile.offsetWidth;
       tile.classList.add('is-shake');
+      play('wrong');
       mascot.say(chara.lines.orderWrong);
       return;
     }
@@ -104,14 +109,19 @@ export const orderScreen: Screen = (root, params) => {
     tile.classList.add('is-used');
     pos += 1;
     renderSlots();
+    speakChar(text);
+    if (pos < units.length) play('correct');
     if (pos === units.length) {
       addStar(word.word);
+      play('fanfare');
+      speakWord(word.word, true);
       mascot.say(chara.lines.wordDone);
       nextBtn.classList.remove('is-hidden');
     }
   }
 
   if (run && isLastInRun(run)) nextBtn.replaceChildren(...button('おわり', { icon: 'check' }).childNodes);
+  picBox.addEventListener('click', () => speakWord(word.word));
   nextBtn.addEventListener('click', () => {
     if (!run) return newWord();
     if (isLastInRun(run)) return toSelect();
