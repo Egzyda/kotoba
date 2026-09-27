@@ -1,10 +1,11 @@
 import { APP } from '../config';
+import { confirmHold } from '../components/confirm';
 import { Mascot } from '../components/mascot';
 import { currentCharacter } from '../data/characters';
 import { button, h } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { icon, type IconName } from '../lib/icons';
-import { loadProgress } from '../lib/storage';
+import { loadProgress, resetProgress } from '../lib/storage';
 import { updateToLatest } from '../lib/update';
 import { go, type Screen } from '../router';
 
@@ -29,6 +30,24 @@ export const homeScreen: Screen = (root) => {
     return b;
   });
 
+  // みぎうえの スター: タップで「ぜんぶ けす」ダイアログ（ながおしで けす）
+  const starNum = h('span', { text: String(progress.stars) });
+  const starBtn = h('button', { class: 'star-count', 'aria-label': `すたー ${progress.stars}` }, [
+    icon('star', { size: 22, fill: 'currentColor' }),
+    starNum,
+  ]);
+  starBtn.addEventListener('click', () =>
+    confirmHold({
+      message: 'スターを ぜんぶ けしますか？',
+      okLabel: 'けす',
+      okIcon: 'eraser',
+      onOk: () => {
+        resetProgress();
+        starNum.textContent = '0';
+      },
+    }),
+  );
+
   const charaBtn = button('かえる', { icon: 'chara', class: 'btn-small', onClick: () => go('/chara') });
 
   const updateBtn = button('さいしんに する', { icon: 'update', class: 'btn-small' });
@@ -48,10 +67,7 @@ export const homeScreen: Screen = (root) => {
     h('main', { class: 'screen home' }, [
       h('header', { class: 'home-header' }, [
         h('h1', { class: 'home-title', html: withFurigana(APP.name) }),
-        h('div', { class: 'star-count', 'aria-label': `すたー ${progress.stars}` }, [
-          icon('star', { size: 22, fill: 'currentColor' }),
-          h('span', { text: String(progress.stars) }),
-        ]),
+        starBtn,
       ]),
       h('section', { class: 'home-mascot' }, [mascot.el]),
       h('nav', { class: 'home-menu' }, modeButtons),

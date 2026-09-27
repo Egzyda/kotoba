@@ -909,3 +909,71 @@ rt {
   font-family: var(--font-play);
   font-weight: 600;
 }
+
+/* ---------- たしかめ ダイアログ ---------- */
+.dialog-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(74, 58, 68, 0.35);
+}
+.dialog {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 18px 18px;
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.dialog-msg {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.8;
+}
+.dialog-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+}
+.dialog-ok {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 60px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--pink-soft);
+  box-shadow: var(--shadow);
+  font-size: 18px;
+}
+.dialog-ok > :not(.dialog-ok-fill) {
+  position: relative;
+}
+.dialog-ok-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--pink);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.dialog-ok.is-holding .dialog-ok-fill {
+  transform: scaleX(1);
+  transition: transform var(--hold) linear;
+}
+.dialog-ok.is-holding {
+  color: var(--white);
+}

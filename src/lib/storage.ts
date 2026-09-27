@@ -28,6 +28,11 @@ export function saveProgress(p: Progress): void {
   }
 }
 
+/** スター（クリアマーク）を ぜんぶ けす */
+export function resetProgress(): void {
+  saveProgress(empty());
+}
+
 export function addStar(char: string, n = 1): Progress {
   const p = loadProgress();
   p.stars += n;
