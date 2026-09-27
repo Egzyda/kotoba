@@ -1,14 +1,21 @@
 // 文字えらび画面: ひらがな/カタカナ × グループのタブと、1画面に収まる文字表。
 // 行の頭の ▶ で「その ぎょうだけ」を順番に練習できる。
+// かこう / ならべる では、えらんだ文字から じゅんばんに 単語を出す。「ランダム」で ばらばらに出す。
 import { GROUPS, getRows, type Group, type Script } from '../data/kana';
-import { h, screenHeader, scriptToggle } from '../lib/dom';
+import { wordFor } from '../data/words';
+import { button, h, screenHeader, scriptToggle } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
 import { icon } from '../lib/icons';
 import { loadPref, loadProgress, savePref } from '../lib/storage';
 import { go, type Screen } from '../router';
 
 export const selectScreen: Screen = (root, params) => {
-  const mode = params.get('mode') === 'cards' ? 'cards' : 'trace';
+  const MODES = { trace: 'なぞる', cards: 'カード', write: 'かこう', order: 'ならべる' } as const;
+  type Mode = keyof typeof MODES;
+  const mode: Mode = (params.get('mode') as Mode) in MODES ? (params.get('mode') as Mode) : 'trace';
+  // かこう・ならべる は 単語が ある 文字だけ えらべる
+  const needsWord = mode === 'write' || mode === 'order';
+  const playable = (char: string) => !needsWord || wordFor(char) !== null;
   let script = (params.get('script') as Script | null) ?? loadPref<Script>('script', 'hira', ['hira', 'kata']);
   let group = (GROUPS.find((g) => g.id === params.get('group'))?.id ?? 'seion') as Group;
   const progress = loadProgress();
@@ -45,17 +52,20 @@ export const selectScreen: Screen = (root, params) => {
     // カタカナ学習中の文字表そのものにはふりがなを付けない（文字が学習対象のため）
     grid.replaceChildren(
       ...rows.flatMap((row, r) => {
+        const first = row.find((k) => k && playable(k.char));
         const rowBtn = h('button', { class: 'row-start', 'aria-label': 'この ぎょう' }, [
           icon('play', { size: 18, fill: 'currentColor' }),
         ]);
-        rowBtn.addEventListener('click', () =>
-          go(`/${mode}`, { script, group, row: String(r), char: row.find((k) => k)!.char }),
-        );
+        rowBtn.disabled = !first;
+        rowBtn.addEventListener('click', () => {
+          if (first) go(`/${mode}`, { script, group, row: String(r), char: first.char });
+        });
         return [
           rowBtn,
           ...row.map((k) => {
             if (!k) return h('div', { class: 'kana-cell is-empty' });
             const cell = h('button', { class: 'kana-cell' }, [h('span', { text: k.char })]);
+            cell.disabled = !playable(k.char);
             if ((progress.perChar[k.char] ?? 0) > 0) {
               cell.append(h('span', { class: 'cell-star' }, [icon('star', { size: 12, fill: 'currentColor' })]));
             }
@@ -79,10 +89,14 @@ export const selectScreen: Screen = (root, params) => {
     renderGrid();
   });
 
-  const title = mode === 'trace' ? 'なぞる' : 'カード';
+  // かこう・ならべる は「ランダム」でも あそべる
+  const randomBtn = needsWord
+    ? [button('ランダム', { icon: 'random', class: 'btn-small btn-random', onClick: () => go(`/${mode}`, { script }) })]
+    : [];
+
   root.append(
     h('main', { class: 'screen select' }, [
-      screenHeader(withFurigana(title), () => go('/')),
+      screenHeader(withFurigana(MODES[mode]), () => go('/'), randomBtn),
       toggle,
       groupTabs,
       h('div', { class: 'grid-wrap' }, [grid]),

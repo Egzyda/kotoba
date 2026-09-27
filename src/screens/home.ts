@@ -11,8 +11,8 @@ import { go, type Screen } from '../router';
 const MODES: { label: string; icon: IconName; cls: string; to: () => void }[] = [
   { label: 'なぞる', icon: 'trace', cls: 'mode-trace', to: () => go('/select', { mode: 'trace' }) },
   { label: 'カード', icon: 'cards', cls: 'mode-cards', to: () => go('/select', { mode: 'cards' }) },
-  { label: 'かこう', icon: 'write', cls: 'mode-write', to: () => go('/write') },
-  { label: 'ならべる', icon: 'order', cls: 'mode-order', to: () => go('/order') },
+  { label: 'かこう', icon: 'write', cls: 'mode-write', to: () => go('/select', { mode: 'write' }) },
+  { label: 'ならべる', icon: 'order', cls: 'mode-order', to: () => go('/select', { mode: 'order' }) },
 ];
 
 export const homeScreen: Screen = (root) => {

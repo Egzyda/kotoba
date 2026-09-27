@@ -41,11 +41,14 @@ export const cardsScreen: Screen = (root, params) => {
   ]);
   card.addEventListener('click', () => {
     card.classList.toggle('is-flipped');
-    if (card.classList.contains('is-flipped') && !word) mascot.say(chara.lines.noWord);
+    if (!card.classList.contains('is-flipped')) return;
+    if (!word) mascot.say(chara.lines.noWord);
+    else if (index === list.length - 1 && rowParam !== null) mascot.say(chara.lines.rowDone);
   });
 
   const move = (d: number) => {
-    const next = list[(index + d + list.length) % list.length];
+    const next = list[index + d];
+    if (!next) return;
     replace('/cards', {
       script,
       group: kana.group,
@@ -54,15 +57,21 @@ export const cardsScreen: Screen = (root, params) => {
     });
   };
 
+  // ひとまわり したら おわり（ループしない）
+  const toSelect = () => go('/select', { mode: 'cards', script, group: kana.group });
+  const isLast = index === list.length - 1;
+  const prevBtn = button('まえ', { icon: 'prev', onClick: () => move(-1) });
+  prevBtn.disabled = index === 0;
+  const nextBtn = isLast
+    ? button('おわり', { icon: 'check', class: 'btn-action is-next', onClick: toSelect })
+    : button('つぎ', { icon: 'next', iconAfter: true, onClick: () => move(1) });
+
   root.append(
     h('main', { class: 'screen cards' }, [
-      screenHeader(withFurigana('カード'), () => go('/select', { mode: 'cards', script, group: kana.group })),
+      screenHeader(withFurigana('カード'), toSelect),
       h('div', { class: 'mascot-row' }, [mascot.el]),
       h('div', { class: 'cards-stage' }, [card]),
-      h('div', { class: 'actions' }, [
-        button('まえ', { icon: 'prev', onClick: () => move(-1) }),
-        button('つぎ', { icon: 'next', iconAfter: true, onClick: () => move(1) }),
-      ]),
+      h('div', { class: 'actions' }, [prevBtn, nextBtn]),
     ]),
   );
   mascot.say(chara.lines.cardsHint);

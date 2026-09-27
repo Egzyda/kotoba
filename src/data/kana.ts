@@ -100,6 +100,7 @@ export function getRowList(script: Script, group: Group, row: number): Kana[] {
 export function splitUnits(word: string): string[] {
   const units: string[] = [];
   for (const c of word) {
+    if (c === ' ') continue;
     if (/[ゃゅょぁぃぅぇぉャュョァィゥェォ]/.test(c) && units.length > 0) {
       units[units.length - 1] += c;
     } else {

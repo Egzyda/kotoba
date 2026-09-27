@@ -13,6 +13,7 @@ import {
   Puzzle,
   RefreshCw,
   RotateCcw,
+  Shuffle,
   Star,
   Users,
   createElement,
@@ -34,6 +35,7 @@ export const ICONS = {
   order: Puzzle,
   update: RefreshCw,
   again: RotateCcw,
+  random: Shuffle,
   star: Star,
   chara: Users,
 } satisfies Record<string, IconNode>;

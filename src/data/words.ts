@@ -124,6 +124,12 @@ export const WORDS: Record<string, Word | null> = {
   ぴょ: w('ぴょんぴょん', 'rabbit', false),
 };
 
+/** 文字（ひらがな・カタカナ）の単語。無ければ null */
+export function wordFor(char: string): Word | null {
+  const hira = char.replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  return WORDS[hira] ?? null;
+}
+
 export function wordImage(word: Word): string {
   return `${import.meta.env.BASE_URL}img/words/${word.image}.svg`;
 }

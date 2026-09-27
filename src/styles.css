@@ -508,6 +508,15 @@ rt {
   font-size: 13px;
   white-space: nowrap;
 }
+.btn-random {
+  color: var(--pink);
+}
+.kana-cell:disabled {
+  opacity: 0.3;
+}
+.row-start:disabled {
+  opacity: 0.3;
+}
 .tab.is-active {
   background: var(--pink);
   color: var(--white);
@@ -571,17 +580,30 @@ rt {
 }
 .board-inner {
   position: relative;
-}
-.board-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
   border-radius: var(--radius);
   background:
     linear-gradient(var(--pink-soft), var(--pink-soft)) center / 2px 100% no-repeat,
     linear-gradient(var(--pink-soft), var(--pink-soft)) center / 100% 2px no-repeat,
     var(--white);
   box-shadow: var(--shadow);
+}
+.board-guide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.guide-glyph {
+  fill: rgba(255, 107, 154, 0.22);
+  font-family: var(--font-play);
+  font-weight: 600;
+}
+.board-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
   touch-action: none;
 }
 .board-order {
@@ -595,9 +617,9 @@ rt {
 .board-order.is-hidden {
   opacity: 0;
 }
-.board-order path {
+.board-order mask path {
   fill: none;
-  stroke: rgba(79, 179, 255, 0.85);
+  stroke: #fff;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
@@ -605,6 +627,15 @@ rt {
   animation-name: draw-stroke;
   animation-timing-function: ease-in-out;
   animation-fill-mode: forwards;
+}
+.order-glyph {
+  fill: #5cb8ff;
+  font-family: var(--font-play);
+  font-weight: 600;
+}
+.order-fill {
+  opacity: 0;
+  animation: pop-in 0.3s forwards;
 }
 @keyframes draw-stroke {
   to {
@@ -620,7 +651,6 @@ rt {
 }
 .order-num text {
   fill: var(--white);
-  font-size: 14px;
   font-weight: 800;
   text-anchor: middle;
   font-family: var(--font);
@@ -828,6 +858,11 @@ rt {
   font-size: 28px;
   white-space: nowrap;
 }
+.order-slots.is-long .slot {
+  min-width: 44px;
+  height: 52px;
+  font-size: 24px;
+}
 .slot.is-filled {
   border: 3px solid var(--pink);
   background: var(--white);
@@ -835,7 +870,7 @@ rt {
 }
 .order-tiles {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--cols, 4), 1fr);
   gap: 10px;
 }
 .tile {

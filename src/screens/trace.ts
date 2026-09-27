@@ -15,7 +15,8 @@ export const traceScreen: Screen = (root, params) => {
   const kana = findKana(script, params.get('char') ?? '') ?? getList(script, group)[0];
   const list = rowParam !== null ? getRowList(script, kana.group, Number(rowParam)) : getList(script, kana.group);
   const index = Math.max(0, list.findIndex((k) => k.char === kana.char));
-  const isLast = rowParam !== null && index === list.length - 1;
+  // ひとまわり したら おわり（さいごの もじの あとは「おわり」）
+  const isLast = index === list.length - 1;
 
   const chara = currentCharacter();
   const mascot = new Mascot(chara, { size: 'small', bubble: 'right' });
@@ -42,7 +43,7 @@ export const traceScreen: Screen = (root, params) => {
     done = true;
     addStar(kana.char);
     if (isLast) {
-      mascot.say(pick(chara.lines.praise), chara.lines.rowDone);
+      mascot.say(pick(chara.lines.praise), ...(rowParam !== null ? [chara.lines.rowDone] : []));
       setMain('おわり', 'check');
     } else {
       mascot.say(pick(chara.lines.praise));
@@ -52,8 +53,7 @@ export const traceScreen: Screen = (root, params) => {
   });
 
   const prevBtn = button('まえ', { icon: 'prev', onClick: () => moveTo(index - 1) });
-  // ぎょう練習の さいしょは もどれない
-  prevBtn.disabled = rowParam !== null && index === 0;
+  prevBtn.disabled = index === 0;
 
   const actions = h('div', { class: 'actions' }, [
     prevBtn,

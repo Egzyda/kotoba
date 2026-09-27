@@ -1,4 +1,5 @@
 // ならべよう: 絵を見て、ばらばらの もじを じゅんばんに えらぶ。
+// ランダム モード と、文字えらびで えらんだ文字から じゅんばんに出す モード がある。
 // レベル1: ダミーなし / 2: ダミー2まい / 3: かたちが にている もじを まぜる
 import { Mascot } from '../components/mascot';
 import { wordPicture } from '../components/word';
@@ -8,8 +9,9 @@ import { lookAlikes } from '../data/lookalike';
 import { QUIZ_WORDS, type Word } from '../data/words';
 import { button, h, screenHeader, scriptToggle, shuffle } from '../lib/dom';
 import { icon } from '../lib/icons';
+import { isLastInRun, parseRun, runParams } from '../lib/sequence';
 import { addStar, loadPref, savePref } from '../lib/storage';
-import { go, type Screen } from '../router';
+import { go, replace, type Screen } from '../router';
 
 type Level = '1' | '2' | '3';
 
@@ -32,8 +34,11 @@ function makeDummies(units: string[], script: Script, level: Level): string[] {
   return dummies;
 }
 
-export const orderScreen: Screen = (root) => {
-  let script = loadPref<Script>('script', 'hira', ['hira', 'kata']);
+export const orderScreen: Screen = (root, params) => {
+  const run = parseRun(params);
+  let script = run?.script ?? loadPref<Script>('script', 'hira', ['hira', 'kata']);
+  const toSelect = () =>
+    go('/select', { mode: 'order', script, ...(run ? { group: run.group } : {}) });
   let level = loadPref<Level>('orderLevel', '1', ['1', '2', '3']);
   const chara = currentCharacter();
   const mascot = new Mascot(chara, { size: 'small', bubble: 'right' });
@@ -48,7 +53,7 @@ export const orderScreen: Screen = (root) => {
   let lastWord = '';
 
   function renderSlots() {
-    slotsEl.style.setProperty('--n', String(units.length));
+    slotsEl.classList.toggle('is-long', units.length >= 6);
     slotsEl.replaceChildren(
       ...units.map((u, i) => h('span', { class: `slot ${i < pos ? 'is-filled' : ''}`, text: i < pos ? u : '' })),
     );
@@ -59,7 +64,7 @@ export const orderScreen: Screen = (root) => {
     pos = 0;
     renderSlots();
     const tiles = shuffle([...units, ...makeDummies(units, script, level)]);
-    tilesEl.style.setProperty('--n', String(tiles.length));
+    tilesEl.style.setProperty('--cols', String(Math.max(4, Math.ceil(tiles.length / 2))));
     tilesEl.replaceChildren(
       ...tiles.map((t) => {
         const b = h('button', { class: 'tile', text: t });
@@ -71,11 +76,15 @@ export const orderScreen: Screen = (root) => {
   }
 
   function newWord() {
-    const pool = QUIZ_WORDS.filter((w) => {
-      const n = splitUnits(w.word).length;
-      return w.word !== lastWord && n >= 2 && n <= 5;
-    });
-    word = pick(pool);
+    if (run) {
+      word = run.word;
+    } else {
+      const pool = QUIZ_WORDS.filter((w) => {
+        const n = splitUnits(w.word).length;
+        return w.word !== lastWord && n >= 2 && n <= 5;
+      });
+      word = pick(pool);
+    }
     lastWord = word.word;
     picBox.replaceChildren(wordPicture(word));
     setupRound();
@@ -102,7 +111,12 @@ export const orderScreen: Screen = (root) => {
     }
   }
 
-  nextBtn.addEventListener('click', newWord);
+  if (run && isLastInRun(run)) nextBtn.replaceChildren(...button('おわり', { icon: 'check' }).childNodes);
+  nextBtn.addEventListener('click', () => {
+    if (!run) return newWord();
+    if (isLastInRun(run)) return toSelect();
+    replace('/order', runParams(run, run.index + 1));
+  });
 
   const levelEl = h('div', { class: 'segmented level' });
   const renderLevel = () =>
@@ -132,8 +146,8 @@ export const orderScreen: Screen = (root) => {
 
   root.append(
     h('main', { class: 'screen order' }, [
-      screenHeader('ならべる', () => go('/')),
-      h('div', { class: 'options' }, [toggle, levelEl]),
+      screenHeader('ならべる', toSelect),
+      h('div', { class: 'options' }, run ? [levelEl] : [toggle, levelEl]),
       picBox,
       slotsEl,
       h('div', { class: 'mascot-row' }, [mascot.el]),
