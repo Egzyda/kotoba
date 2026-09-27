@@ -12,6 +12,12 @@ export interface CharacterLines {
   cardsHint: string; // たんごカード画面に入ったとき
   updateLatest: string; // さいしんに する → もう最新
   updateOffline: string; // さいしんに する → つながらない
+  writeHint: string; // えを みて かこう の はじめ
+  orderHint: string; // ならべよう の はじめ
+  orderWrong: string; // ならべよう で ちがう もじ
+  wordDone: string; // たんごが できた
+  rowDone: string; // ぎょうを ぜんぶ なぞった
+  noWord: string; // たんごが ない もじ（ぢ など）
 }
 
 export interface Character {
@@ -48,6 +54,12 @@ export const CHARACTERS: Character[] = [
       cardsHint: 'タッチで めくって みよう！',
       updateLatest: 'もう さいしんだよ！ はなまる！',
       updateOffline: 'いまは つながらないみたい…',
+      writeHint: 'えを みて、もじを なぞろう！',
+      orderHint: 'もじを じゅんばんに えらんでね！',
+      orderWrong: 'おしい！ もう いっかい！',
+      wordDone: 'はなまる！ ことばが できたね！',
+      rowDone: 'この ぎょう ぜんぶ はなまる！',
+      noWord: 'この もじの ことばは なぞだね…！',
     },
   },
   {
@@ -72,6 +84,12 @@ export const CHARACTERS: Character[] = [
       cardsHint: 'タッチで めくって みてください！',
       updateLatest: 'もう さいしんです！',
       updateOffline: 'いまは つながらないみたいです…',
+      writeHint: 'えを みて、もじを なぞって みましょう！',
+      orderHint: 'もじを じゅんばんに えらんで ください！',
+      orderWrong: 'おしいです！ もう いちど！',
+      wordDone: 'ことばが できました！ すごいです！',
+      rowDone: 'この ぎょう、ぜんぶ できましたね！',
+      noWord: 'この もじの ことばは むずかしいです…',
     },
   },
   {
@@ -95,6 +113,12 @@ export const CHARACTERS: Character[] = [
       cardsHint: 'タッチすると めくれますよ。',
       updateLatest: 'もう さいしんですよ。',
       updateOffline: 'いまは つながらないようですね。',
+      writeHint: 'えを よく みて、なぞって みましょうね。',
+      orderHint: 'もじを じゅんばんに えらびましょう。',
+      orderWrong: 'だいじょうぶ、もう いちど。',
+      wordDone: 'ことばが できましたね。 おみごとです。',
+      rowDone: 'この ぎょうは ぜんぶ できましたね。',
+      noWord: 'この もじは ことばが みつからないの。',
     },
   },
   {
@@ -118,6 +142,12 @@ export const CHARACTERS: Character[] = [
       cardsHint: 'タッチ。 めくれるよ。',
       updateLatest: '…もう さいしん。',
       updateOffline: 'つながらない。 …あとで。',
+      writeHint: '…えを みて、なぞって。',
+      orderHint: 'じゅんばんに えらんで。',
+      orderWrong: '…ちがう。 もう いっかい。',
+      wordDone: '…できたね。 えらい。',
+      rowDone: 'ぜんぶ おわり。 …アイス たべる？',
+      noWord: '…この もじは ことば、ないみたい。',
     },
   },
 ];

@@ -5,8 +5,10 @@ import { loadCharacterId } from './lib/storage';
 import { cardsScreen } from './screens/cards';
 import { charaScreen } from './screens/chara';
 import { homeScreen } from './screens/home';
+import { orderScreen } from './screens/order';
 import { selectScreen } from './screens/select';
 import { traceScreen } from './screens/trace';
+import { writeScreen } from './screens/write';
 
 cleanupReloadParam();
 
@@ -15,6 +17,8 @@ defineRoute('/select', selectScreen);
 defineRoute('/trace', traceScreen);
 defineRoute('/cards', cardsScreen);
 defineRoute('/chara', charaScreen);
+defineRoute('/write', writeScreen);
+defineRoute('/order', orderScreen);
 
 // はじめて開いたときは、あんないキャラを えらんでもらう
 if (loadCharacterId() === null) window.location.replace('#/chara');

@@ -54,3 +54,21 @@ export function saveCharacterId(id: string): void {
     // 保存できなくても遊べるので無視
   }
 }
+
+// ちょっとした設定（最後に使った ひらがな/カタカナ、ならべよう の レベル など）
+export function loadPref<T extends string>(key: string, fallback: T, allowed: readonly T[]): T {
+  try {
+    const v = localStorage.getItem(`kotoba:pref:${key}`) as T | null;
+    return v !== null && allowed.includes(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function savePref(key: string, value: string): void {
+  try {
+    localStorage.setItem(`kotoba:pref:${key}`, value);
+  } catch {
+    // 無視
+  }
+}

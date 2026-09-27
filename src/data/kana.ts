@@ -32,8 +32,7 @@ const HIRA_TABLE: Record<Group, [string, string][]> = {
     ['ま み む め も', 'ma mi mu me mo'],
     ['や _ ゆ _ よ', 'ya _ yu _ yo'],
     ['ら り る れ ろ', 'ra ri ru re ro'],
-    ['わ _ _ _ を', 'wa _ _ _ wo'],
-    ['ん _ _ _ _', 'n _ _ _ _'],
+    ['わ _ を _ ん', 'wa _ wo _ n'],
   ],
   dakuon: [
     ['が ぎ ぐ げ ご', 'ga gi gu ge go'],
@@ -90,4 +89,26 @@ export function findKana(script: Script, char: string): Kana | undefined {
     if (hit) return hit;
   }
   return undefined;
+}
+
+/** 行（あ行など）の文字。row は getRows の添字 */
+export function getRowList(script: Script, group: Group, row: number): Kana[] {
+  return (getRows(script, group)[row] ?? []).filter((k): k is Kana => k !== null);
+}
+
+/** 小さい ゃゅょ などを前の文字とまとめて「1文字ぶん」に分ける（きゃ・しゅ など） */
+export function splitUnits(word: string): string[] {
+  const units: string[] = [];
+  for (const c of word) {
+    if (/[ゃゅょぁぃぅぇぉャュョァィゥェォ]/.test(c) && units.length > 0) {
+      units[units.length - 1] += c;
+    } else {
+      units.push(c);
+    }
+  }
+  return units;
+}
+
+export function toScript(s: string, script: Script): string {
+  return script === 'kata' ? hiraToKata(s) : kataToHira(s);
 }

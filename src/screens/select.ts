@@ -1,49 +1,29 @@
-// 文字セット選択画面: ひらがな/カタカナ × グループのタブと、文字表グリッド
+// 文字えらび画面: ひらがな/カタカナ × グループのタブと、1画面に収まる文字表。
+// 行の頭の ▶ で「その ぎょうだけ」を順番に練習できる。
 import { GROUPS, getRows, type Group, type Script } from '../data/kana';
-import { h, screenHeader } from '../lib/dom';
+import { h, screenHeader, scriptToggle } from '../lib/dom';
 import { withFurigana } from '../lib/furigana';
-import { loadProgress } from '../lib/storage';
+import { icon } from '../lib/icons';
+import { loadPref, loadProgress, savePref } from '../lib/storage';
 import { go, type Screen } from '../router';
-
-const SCRIPTS: { id: Script; label: string }[] = [
-  { id: 'hira', label: 'ひらがな' },
-  { id: 'kata', label: 'カタカナ' },
-];
 
 export const selectScreen: Screen = (root, params) => {
   const mode = params.get('mode') === 'cards' ? 'cards' : 'trace';
-  let script = (params.get('script') as Script) || 'hira';
-  let group = (params.get('group') as Group) || 'seion';
+  let script = (params.get('script') as Script | null) ?? loadPref<Script>('script', 'hira', ['hira', 'kata']);
+  let group = (GROUPS.find((g) => g.id === params.get('group'))?.id ?? 'seion') as Group;
   const progress = loadProgress();
 
-  const scriptTabs = h('div', { class: 'tabs tabs-script', role: 'tablist' });
-  const groupTabs = h('div', { class: 'tabs tabs-group', role: 'tablist' });
+  const groupTabs = h('div', { class: 'tabs', role: 'tablist' });
   const grid = h('div', { class: 'kana-grid' });
 
   const syncUrl = () =>
     history.replaceState(null, '', `#/select?${new URLSearchParams({ mode, script, group })}`);
 
-  function renderTabs() {
-    scriptTabs.replaceChildren(
-      ...SCRIPTS.map((s) => {
-        // タブ名はナビゲーション用なのでカタカナにもふりがなを付ける
-        const b = h('button', {
-          class: `tab ${s.id === script ? 'is-active' : ''}`,
-          role: 'tab',
-          html: withFurigana(s.label),
-        });
-        b.addEventListener('click', () => {
-          script = s.id;
-          syncUrl();
-          renderAll();
-        });
-        return b;
-      }),
-    );
+  function renderGroupTabs() {
     groupTabs.replaceChildren(
       ...GROUPS.map((g) => {
         const b = h('button', {
-          class: `tab tab-small ${g.id === group ? 'is-active' : ''}`,
+          class: `tab ${g.id === group ? 'is-active' : ''}`,
           role: 'tab',
           text: g.label,
         });
@@ -59,34 +39,53 @@ export const selectScreen: Screen = (root, params) => {
 
   function renderGrid() {
     const rows = getRows(script, group);
-    grid.className = `kana-grid ${group === 'youon' ? 'cols-3' : 'cols-5'}`;
+    const cols = rows[0].length;
+    grid.style.setProperty('--rows', String(rows.length));
+    grid.style.setProperty('--cols', String(cols));
     // カタカナ学習中の文字表そのものにはふりがなを付けない（文字が学習対象のため）
     grid.replaceChildren(
-      ...rows.flat().map((k) => {
-        if (!k) return h('div', { class: 'kana-cell is-empty' });
-        const stars = progress.perChar[k.char] ?? 0;
-        const cell = h('button', { class: 'kana-cell', text: k.char });
-        if (stars > 0) cell.append(h('span', { class: 'cell-star', text: '★' }));
-        cell.addEventListener('click', () =>
-          go(`/${mode}`, { script, group, char: k.char }),
+      ...rows.flatMap((row, r) => {
+        const rowBtn = h('button', { class: 'row-start', 'aria-label': 'この ぎょう' }, [
+          icon('play', { size: 18, fill: 'currentColor' }),
+        ]);
+        rowBtn.addEventListener('click', () =>
+          go(`/${mode}`, { script, group, row: String(r), char: row.find((k) => k)!.char }),
         );
-        return cell;
+        return [
+          rowBtn,
+          ...row.map((k) => {
+            if (!k) return h('div', { class: 'kana-cell is-empty' });
+            const cell = h('button', { class: 'kana-cell' }, [h('span', { text: k.char })]);
+            if ((progress.perChar[k.char] ?? 0) > 0) {
+              cell.append(h('span', { class: 'cell-star' }, [icon('star', { size: 12, fill: 'currentColor' })]));
+            }
+            cell.addEventListener('click', () => go(`/${mode}`, { script, group, char: k.char }));
+            return cell;
+          }),
+        ];
       }),
     );
   }
 
   function renderAll() {
-    renderTabs();
+    renderGroupTabs();
     renderGrid();
   }
 
-  const title = mode === 'trace' ? 'なぞる' : 'たんごカード';
+  const toggle = scriptToggle(script, (s) => {
+    script = s;
+    savePref('script', s);
+    syncUrl();
+    renderGrid();
+  });
+
+  const title = mode === 'trace' ? 'なぞる' : 'カード';
   root.append(
     h('main', { class: 'screen select' }, [
       screenHeader(withFurigana(title), () => go('/')),
-      scriptTabs,
+      toggle,
       groupTabs,
-      grid,
+      h('div', { class: 'grid-wrap' }, [grid]),
     ]),
   );
   renderAll();
